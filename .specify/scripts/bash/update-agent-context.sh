@@ -34,7 +34,7 @@
 #    - Can update single agents or all existing agent files
 #    - Creates default Claude file if no agent files exist
 #
-# Usage: ./update-agent-context.sh [agent_type]
+# Usage: ./update-agent-context.sh [agent_type] [--feature <feature-name>]
 # Agent types: claude|gemini|copilot|cursor-agent|qwen|opencode|codex|windsurf|kilocode|auggie|shai|q|bob|qoder
 # Leave empty to update all existing agent files
 
@@ -44,6 +44,40 @@ set -e
 set -u
 set -o pipefail
 
+# Argument parsing
+AGENT_TYPE=""
+EXPLICIT_FEATURE_NAME=""
+POSITIONAL_ARGS=()
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --feature)
+            if [[ -z "$2" ]]; then
+                echo "Error: --feature requires a value."
+                exit 1
+            fi
+            EXPLICIT_FEATURE_NAME="$2"
+            shift 2 # Consume --feature and its value
+            ;;
+        -*)
+            echo "Unknown option: $1"
+            exit 1
+            ;;
+        *)
+            POSITIONAL_ARGS+=("$1") # Save positional arg
+            shift # Consume it
+            ;;
+    esac
+done
+
+# Restore positional arguments for later use (if any)
+set -- "${POSITIONAL_ARGS[@]}"
+
+# If an agent type was provided as a positional argument
+if [[ ${#POSITIONAL_ARGS[@]} -ge 1 ]]; then
+    AGENT_TYPE="${POSITIONAL_ARGS[0]}"
+fi
+
 #==============================================================================
 # Configuration and Global Variables
 #==============================================================================
@@ -52,11 +86,15 @@ set -o pipefail
 SCRIPT_DIR="$(CDPATH="" cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
 
+# Set SPECIFY_FEATURE for common.sh if explicit feature is provided
+if [[ -n "$EXPLICIT_FEATURE_NAME" ]]; then
+    export SPECIFY_FEATURE="$EXPLICIT_FEATURE_NAME"
+fi
+
 # Get all paths and variables from common functions
 eval $(get_feature_paths)
 
 NEW_PLAN="$IMPL_PLAN"  # Alias for compatibility with existing code
-AGENT_TYPE="${1:-}"
 
 # Agent-specific file paths  
 CLAUDE_FILE="$REPO_ROOT/CLAUDE.md"

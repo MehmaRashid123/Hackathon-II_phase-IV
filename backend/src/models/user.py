@@ -4,9 +4,9 @@ User SQLModel for database schema.
 Represents a registered user account with authentication credentials.
 """
 
-from sqlmodel import SQLModel, Field
+from sqlmodel import SQLModel, Field, Relationship
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 import uuid
 
 
@@ -61,6 +61,10 @@ class User(SQLModel, table=True):
         sa_column_kwargs={"onupdate": datetime.utcnow},
         description="Last modification timestamp (UTC, auto-updated)"
     )
+
+    projects: List["Project"] = Relationship(back_populates="user")
+    workspace_memberships: List["WorkspaceMember"] = Relationship(back_populates="user")
+    activities: List["Activity"] = Relationship(back_populates="user")
 
     class Config:
         """SQLModel configuration."""

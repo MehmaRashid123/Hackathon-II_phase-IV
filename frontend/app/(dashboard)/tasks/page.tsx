@@ -1,5 +1,5 @@
 /**
- * Dashboard Page - Main task management interface.
+ * Tasks Page - List view of all tasks.
  *
  * Protected route - requires authentication.
  */
@@ -15,9 +15,11 @@ import { TaskForm } from "@/components/tasks/TaskForm";
 import { TaskList } from "@/components/tasks/TaskList";
 import { PageTransition } from "@/components/ui/PageTransition";
 import { AnimatedProgress } from "@/components/ui/AnimatedProgress";
-import { Plus } from "lucide-react";
+import { SkeletonCard } from "@/components/SkeletonCard";
+import { Plus, Grid3x3, List } from "lucide-react";
+import Link from "next/link";
 
-export default function DashboardPage() {
+export default function TasksPage() {
   const router = useRouter();
   const [user, setUser] = useState<{ email: string } | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -56,12 +58,6 @@ export default function DashboardPage() {
       showToast(tasksError, "error");
     }
   }, [tasksError, showToast]);
-
-  // Handle logout
-  const handleLogout = () => {
-    auth.clearAuth();
-    router.push("/login");
-  };
 
   // Handle create task
   const handleCreateTask = async (data: { title: string; description?: string }) => {
@@ -106,26 +102,38 @@ export default function DashboardPage() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-gray-50">
-        {/* Navbar */}
-        <nav className="bg-white shadow-sm border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <div className="flex items-center">
-                <h1 className="text-xl font-bold text-gray-900">Task Dashboard</h1>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        {/* Header */}
+        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Tasks</h1>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Manage all your tasks in list view
+                </p>
               </div>
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-600">{user.email}</span>
-                <button
-                  onClick={handleLogout}
-                  className="px-4 py-2 text-sm font-medium text-white glass-button bg-red-600 hover:bg-red-700 transition-colors"
-                >
-                  Sign Out
-                </button>
+              <div className="flex items-center gap-3">
+                {/* View Toggle */}
+                <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+                  <button
+                    className="px-3 py-2 rounded-md bg-white dark:bg-gray-600 shadow-sm text-gray-900 dark:text-white"
+                    title="List View (Active)"
+                  >
+                    <List size={18} />
+                  </button>
+                  <Link
+                    href="/kanban"
+                    className="px-3 py-2 rounded-md hover:bg-white/50 dark:hover:bg-gray-600/50 text-gray-600 dark:text-gray-300 transition-colors"
+                    title="Switch to Kanban View"
+                  >
+                    <Grid3x3 size={18} />
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
-        </nav>
+        </div>
 
         {/* Main Content */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -144,14 +152,14 @@ export default function DashboardPage() {
           <div className="mb-8">
             <div className="flex justify-between items-center mb-4">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">My Tasks</h2>
-                <p className="text-sm text-gray-600 mt-1">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">My Tasks</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   {tasks.length} {tasks.length === 1 ? "task" : "tasks"} total
                 </p>
               </div>
               <button
                 onClick={() => setShowForm(!showForm)}
-                className="px-6 py-3 btn-primary shadow-sm flex items-center gap-2"
+                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
               >
                 {showForm ? (
                   "Cancel"
@@ -166,8 +174,8 @@ export default function DashboardPage() {
 
             {/* Task Creation Form */}
             {showForm && (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                   Create New Task
                 </h3>
                 <TaskForm

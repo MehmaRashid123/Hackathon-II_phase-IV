@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
 from typing import Optional
 import uuid
+from backend.src.models.task import StatusEnum
 
 
 class TaskCreate(BaseModel):
@@ -147,9 +148,11 @@ class TaskResponse(BaseModel):
     - title: Task title
     - description: Task description (may be null)
     - is_completed: Completion status
+    - status: Task status (TO_DO, IN_PROGRESS, REVIEW, DONE)
     - created_at: Timestamp of creation (UTC)
     - updated_at: Timestamp of last update (UTC)
     - user_id: Owner's user ID (UUID)
+    - workspace_id: Workspace ID (UUID, optional)
 
     **Example**:
     ```json
@@ -158,9 +161,11 @@ class TaskResponse(BaseModel):
         "title": "Complete project documentation",
         "description": "Write comprehensive API documentation",
         "is_completed": false,
+        "status": "TO_DO",
         "created_at": "2024-01-01T12:00:00Z",
         "updated_at": "2024-01-01T12:00:00Z",
-        "user_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+        "user_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+        "workspace_id": "450e8400-e29b-41d4-a716-446655440001"
     }
     ```
     """
@@ -169,9 +174,11 @@ class TaskResponse(BaseModel):
     title: str = Field(description="Task title")
     description: Optional[str] = Field(description="Task description (may be null)")
     is_completed: bool = Field(description="Completion status (true/false)")
+    status: StatusEnum = Field(description="Task status")
     created_at: datetime = Field(description="Timestamp of task creation (UTC)")
     updated_at: datetime = Field(description="Timestamp of last update (UTC)")
     user_id: uuid.UUID = Field(description="Owner's user ID")
+    workspace_id: Optional[uuid.UUID] = Field(default=None, description="Workspace ID (optional)")
 
     class Config:
         """Pydantic configuration."""
@@ -182,8 +189,37 @@ class TaskResponse(BaseModel):
                 "title": "Complete project documentation",
                 "description": "Write comprehensive API documentation with examples",
                 "is_completed": False,
+                "status": "TO_DO",
                 "created_at": "2024-01-01T12:00:00Z",
                 "updated_at": "2024-01-01T12:00:00Z",
-                "user_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+                "user_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+                "workspace_id": "450e8400-e29b-41d4-a716-446655440001"
             }
         }
+
+
+class TaskStatusUpdate(BaseModel):
+    """
+    Schema for updating task status (Kanban drag-and-drop).
+
+    **Validation**:
+    - status: Required, must be one of: TO_DO, IN_PROGRESS, REVIEW, DONE
+
+    **Example**:
+    ```json
+    {
+        "status": "IN_PROGRESS"
+    }
+    ```
+    """
+
+    status: StatusEnum = Field(description="New task status (TO_DO, IN_PROGRESS, REVIEW, DONE)")
+
+    class Config:
+        """Pydantic configuration."""
+        json_schema_extra = {
+            "example": {
+                "status": "IN_PROGRESS"
+            }
+        }
+

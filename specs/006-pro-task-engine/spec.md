@@ -1,6 +1,6 @@
 # Feature Specification: Pro Task Engine Implementation
 
-**Feature Branch**: `001-pro-task-engine`
+**Feature Branch**: `006-pro-task-engine`
 **Created**: 2026-02-05
 **Status**: Draft
 **Input**: User description: "Pro Task Engine Implementation (Spec 5)

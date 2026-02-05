@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation'; // Import usePathname
-import { LayoutDashboard, ListTodo } from 'lucide-react'; // Import Lucide icons
+import { LayoutDashboard, ListTodo, Columns3 } from 'lucide-react'; // Import Lucide icons
 
 export function Sidebar({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: (isOpen: boolean) => void }) {
   const [isMobile, setIsMobile] = useState(false);
@@ -49,6 +49,10 @@ export function Sidebar({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: (is
           <Link href="/tasks" className={`flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700 ${isActive('/tasks') ? 'bg-gray-700' : ''}`}>
             <ListTodo className="w-5 h-5" />
             {(isOpen || !isMobile) && <span>Tasks</span>}
+          </Link>
+          <Link href="/kanban" className={`flex items-center space-x-2 p-2 rounded-md hover:bg-gray-700 ${isActive('/kanban') ? 'bg-gray-700' : ''}`}>
+            <Columns3 className="w-5 h-5" />
+            {(isOpen || !isMobile) && <span>Kanban</span>}
           </Link>
           {/* More navigation links can go here */}
         </nav>

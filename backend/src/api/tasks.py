@@ -18,8 +18,12 @@ from sqlmodel import Session
 from typing import List
 
 from src.database import get_session
-from src.schemas.task_schemas import TaskCreate, TaskUpdate, TaskResponse
+from src.schemas.task_schemas import TaskCreate, TaskUpdate, TaskResponse, TaskStatusUpdate
 from src.services.task_service import TaskService
+from src.services.permissions import PermissionService
+from src.services.activity_service import ActivityService
+from src.models.activity import ActivityType
+from src.models.task import StatusEnum
 from src.middleware.auth import validate_user_id
 
 
@@ -411,3 +415,223 @@ async def delete_task(
 
     # Return 204 No Content (FastAPI handles this automatically)
     return None
+
+
+# ===== WORKSPACE-AWARE ENDPOINTS (007-interactive-workspace-views) =====
+
+@router.patch(
+    "/workspaces/{workspace_id}/tasks/{task_id}/status",
+    response_model=TaskResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Update task status (Kanban drag-and-drop)",
+    description="""
+    Update a task's status for Kanban board drag-and-drop operations.
+
+    **Security**:
+    - Requires valid JWT token
+    - User must have at least MEMBER role in the workspace
+    - Task must belong to the workspace
+
+    **Status Values**: TO_DO, IN_PROGRESS, REVIEW, DONE
+
+    **Activity Logging**: Status changes are logged automatically
+
+    **Returns:**
+    - HTTP 200: Task status updated successfully
+    - HTTP 400: If task_id or workspace_id is invalid format
+    - HTTP 401: If authentication fails
+    - HTTP 403: If user lacks permission (not a workspace member)
+    - HTTP 404: If task or workspace not found
+    - HTTP 422: If validation fails (invalid status value)
+
+    **Authorization**: Bearer {jwt_token}
+    """
+)
+async def update_task_status(
+    workspace_id: str,
+    task_id: str,
+    status_update: TaskStatusUpdate,
+    user_id: str = Depends(validate_user_id),
+    session: Session = Depends(get_session)
+) -> TaskResponse:
+    """
+    Update task status for Kanban drag-and-drop.
+
+    This endpoint is optimized for Kanban board operations with:
+    - Workspace permission validation (MEMBER role required)
+    - Automatic activity logging
+    - Optimistic UI support (< 1 second response time)
+
+    Args:
+        workspace_id: Workspace ID from URL path
+        task_id: Task ID from URL path
+        status_update: TaskStatusUpdate schema with new status
+        user_id: User ID from JWT token (injected)
+        session: Database session (injected)
+
+    Returns:
+        TaskResponse: Updated task with new status
+
+    Raises:
+        HTTPException 404: If task or workspace not found
+        HTTPException 403: If user lacks workspace access or task doesn't belong to workspace
+        HTTPException 422: If status value is invalid
+
+    Example Request:
+        PATCH /api/workspaces/450e8400-e29b-41d4-a716-446655440001/tasks/550e8400-e29b-41d4-a716-446655440000/status
+        Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        Content-Type: application/json
+
+        {
+            "status": "IN_PROGRESS"
+        }
+
+    Example Response (200):
+        {
+            "id": "550e8400-e29b-41d4-a716-446655440000",
+            "title": "Complete project documentation",
+            "description": "Write comprehensive API documentation",
+            "is_completed": false,
+            "status": "IN_PROGRESS",
+            "created_at": "2024-01-01T12:00:00Z",
+            "updated_at": "2024-01-01T15:30:00Z",
+            "user_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+            "workspace_id": "450e8400-e29b-41d4-a716-446655440001"
+        }
+    """
+    import uuid as uuid_module
+
+    # Convert string IDs to UUID
+    try:
+        workspace_uuid = uuid_module.UUID(workspace_id)
+        task_uuid = uuid_module.UUID(task_id)
+        user_uuid = uuid_module.UUID(user_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid UUID format"
+        )
+
+    # Check workspace permission (MEMBER role required to edit tasks)
+    if not PermissionService.user_can_edit_task(session, user_uuid, workspace_uuid):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to edit tasks in this workspace"
+        )
+
+    # Get task and verify it belongs to workspace
+    task = TaskService.get_task_by_id(session, user_id, task_id)
+
+    if task.workspace_id != workspace_uuid:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Task does not belong to this workspace"
+        )
+
+    # Store old status for activity logging
+    old_status = task.status
+
+    # Update task status
+    task.status = status_update.status
+
+    # Auto-mark as completed if moved to DONE
+    if status_update.status == StatusEnum.DONE:
+        task.is_completed = True
+    elif task.is_completed and status_update.status != StatusEnum.DONE:
+        # Unmark completion if moved away from DONE
+        task.is_completed = False
+
+    session.add(task)
+    session.commit()
+    session.refresh(task)
+
+    # Log activity (async in background for production)
+    try:
+        activity_description = f"Task '{task.title}' moved from {old_status.value} to {status_update.status.value}"
+        ActivityService.log_activity(
+            db=session,
+            workspace_id=workspace_uuid,
+            user_id=user_uuid,
+            activity_type=ActivityType.TASK_STATUS_CHANGED,
+            description=activity_description,
+            task_id=task_uuid
+        )
+    except Exception as e:
+        # Don't fail the request if activity logging fails
+        print(f"Warning: Activity logging failed: {e}")
+
+    return TaskResponse.model_validate(task)
+
+
+@router.get(
+    "/workspaces/{workspace_id}/tasks",
+    response_model=List[TaskResponse],
+    status_code=status.HTTP_200_OK,
+    summary="List workspace tasks",
+    description="""
+    Retrieve all tasks for a workspace.
+
+    **Security**:
+    - Requires valid JWT token
+    - User must be a member of the workspace (any role)
+
+    **Returns:**
+    - HTTP 200: List of tasks (may be empty array)
+    - HTTP 401: If authentication fails
+    - HTTP 403: If user is not a workspace member
+    - HTTP 404: If workspace not found
+
+    **Authorization**: Bearer {jwt_token}
+    """
+)
+async def list_workspace_tasks(
+    workspace_id: str,
+    user_id: str = Depends(validate_user_id),
+    session: Session = Depends(get_session)
+) -> List[TaskResponse]:
+    """
+    List all tasks in a workspace.
+
+    Args:
+        workspace_id: Workspace ID from URL path
+        user_id: User ID from JWT token (injected)
+        session: Database session (injected)
+
+    Returns:
+        List[TaskResponse]: All tasks in workspace
+
+    Raises:
+        HTTPException 403: If user is not a workspace member
+        HTTPException 404: If workspace not found
+    """
+    import uuid as uuid_module
+
+    try:
+        workspace_uuid = uuid_module.UUID(workspace_id)
+        user_uuid = uuid_module.UUID(user_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid UUID format"
+        )
+
+    # Check workspace access
+    if not PermissionService.user_has_workspace_access(session, user_uuid, workspace_uuid):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have access to this workspace"
+        )
+
+    # Get workspace tasks
+    from sqlmodel import select
+    from src.models.task import Task
+
+    statement = (
+        select(Task)
+        .where(Task.workspace_id == workspace_uuid)
+        .order_by(Task.created_at.desc())
+    )
+    tasks = session.exec(statement).all()
+
+    return [TaskResponse.model_validate(task) for task in tasks]
+

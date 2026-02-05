@@ -1,9 +1,9 @@
 # Implementation Plan: Pro Task Engine Implementation
 
-**Feature Branch**: `001-pro-task-engine`
+**Feature Branch**: `006-pro-task-engine`
 **Created**: 2026-02-05
 **Status**: Draft
-**Feature Spec**: [./spec.md](specs/001-pro-task-engine/spec.md)
+**Feature Spec**: [./spec.md](specs/006-pro-task-engine/spec.md)
 
 ## 1. Technical Context
 
@@ -87,7 +87,7 @@ This plan aligns with the project's constitution.
 
 ## 4. Data Model
 
-**(This section will inform `specs/001-pro-task-engine/data-model.md`)**
+**(This section will inform `specs/006-pro-task-engine/data-model.md`)**
 
 ### Existing `Task` Model (`backend/src/models/task.py`)
 -   `id: Optional[UUID]` (Primary Key)
@@ -168,7 +168,7 @@ This plan aligns with the project's constitution.
 
 ## 5. API Contracts
 
-**(This section will inform `specs/001-pro-task-engine/contracts/task-api-v2.openapi.yaml` and other contract files)**
+**(This section will inform `specs/006-pro-task-engine/contracts/task-api-v2.openapi.yaml` and other contract files)**
 
 ### Updated Existing Endpoints (`backend/src/api/tasks.py`)
 
@@ -235,7 +235,7 @@ This plan aligns with the project's constitution.
 
 ## 7. Quickstart
 
-**(This section will inform `specs/001-pro-task-engine/quickstart.md`)**
+**(This section will inform `specs/006-pro-task-engine/quickstart.md`)**
 
 1.  **Environment Setup**: Ensure `DATABASE_URL`, `JWT_SECRET`, and `ALLOWED_ORIGINS` are configured in `.env`.
 2.  **Database Migration**: Run `alembic upgrade head` in the backend directory to apply schema changes.

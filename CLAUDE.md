@@ -426,3 +426,10 @@ For each feature implementation:
 - Skip spec/plan/tasks workflow
 - Mix concerns across agents (e.g., database logic in frontend agent)
 - Hardcode secrets or configuration values
+
+## Active Technologies
+- Python 3.11+ (backend), TypeScript 5+ (frontend) + FastAPI (backend), Next.js 16+ App Router (frontend), Better Auth (auth), SQLModel (ORM), Neon PostgreSQL (database) (001-pro-task-engine)
+- Neon Serverless PostgreSQL with SQLModel ORM (001-pro-task-engine)
+
+## Recent Changes
+- 001-pro-task-engine: Added Python 3.11+ (backend), TypeScript 5+ (frontend) + FastAPI (backend), Next.js 16+ App Router (frontend), Better Auth (auth), SQLModel (ORM), Neon PostgreSQL (database)

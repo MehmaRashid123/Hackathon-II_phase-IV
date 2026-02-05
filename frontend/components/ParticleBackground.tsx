@@ -2,13 +2,40 @@
 
 import React, { useEffect, useState } from 'react';
 
+// Particle style interface
+interface ParticleStyle {
+  left: string;
+  top: string;
+  width: string;
+  height: string;
+  animationDelay: string;
+  animationDuration: string;
+}
+
 // A simple CSS-based particle effect for demonstration
 const ParticleBackground: React.FC = () => {
   const [particleCount, setParticleCount] = useState(150);
+  const [particles, setParticles] = useState<ParticleStyle[]>([]);
+  const [isClient, setIsClient] = useState(false);
 
+  // Generate particles only on client side after hydration
   useEffect(() => {
+    setIsClient(true);
+
     const handleResize = () => {
-      setParticleCount(window.innerWidth < 768 ? 50 : 150);
+      const count = window.innerWidth < 768 ? 50 : 150;
+      setParticleCount(count);
+
+      // Generate new particles with random positions
+      const newParticles: ParticleStyle[] = Array.from({ length: count }).map(() => ({
+        left: `${Math.random() * 100}vw`,
+        top: `${Math.random() * 100}vh`,
+        width: `${Math.random() * 5 + 1}px`,
+        height: `${Math.random() * 5 + 1}px`,
+        animationDelay: `${Math.random() * 10}s`,
+        animationDuration: `${Math.random() * 30 + 10}s`,
+      }));
+      setParticles(newParticles);
     };
 
     handleResize();
@@ -26,25 +53,9 @@ const ParticleBackground: React.FC = () => {
     return () => mediaQuery.removeEventListener('change', listener);
   }, []);
 
-  if (prefersReducedMotion) {
-    return null; // Do not render particles if reduced motion is preferred
+  if (!isClient || prefersReducedMotion) {
+    return null; // Do not render particles during SSR or if reduced motion is preferred
   }
-
-  const particles = Array.from({ length: particleCount }).map((_, i) => (
-    <div
-      key={i}
-      className="particle absolute bg-white rounded-full opacity-0"
-      style={{
-        left: `${Math.random() * 100}vw`,
-        top: `${Math.random() * 100}vh`,
-        width: `${Math.random() * 5 + 1}px`,
-        height: `${Math.random() * 5 + 1}px`,
-        animationDelay: `${Math.random() * 10}s`,
-        animationDuration: `${Math.random() * 30 + 10}s`,
-        animationName: 'moveParticles',
-      }}
-    />
-  ));
 
   return (
     <div className="absolute inset-0 overflow-hidden -z-10">
@@ -68,9 +79,16 @@ const ParticleBackground: React.FC = () => {
         .particle {
           animation-iteration-count: infinite;
           animation-timing-function: linear;
+          animation-name: moveParticles;
         }
       `}</style>
-      {particles}
+      {particles.map((style, i) => (
+        <div
+          key={i}
+          className="particle absolute bg-white rounded-full opacity-0"
+          style={style}
+        />
+      ))}
     </div>
   );
 };
