@@ -1,0 +1,155 @@
+openapi: 3.1.0
+info:
+  title: Health Check API
+  version: 1.0.0
+  description: JWT-authenticated health check endpoint to verify authentication bridge between Next.js frontend and FastAPI backend.
+  contact:
+    name: Hackathon Phase II Team
+    email: support@example.com
+
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+  - url: https://api.production.example.com
+    description: Production server (future)
+
+paths:
+  /api/health:
+    get:
+      summary: Health Check with JWT Verification
+      description: |
+        Returns health status of the backend API and verifies JWT authentication.
+
+        **Purpose**: Demonstrate that the JWT bridge between frontend (Better Auth) and backend (FastAPI) is working correctly.
+
+        **Authentication**: Requires valid JWT token in Authorization header.
+
+        **Success Response**: Returns 200 OK with user ID and email extracted from JWT.
+
+        **Failure Responses**: Returns 401 Unauthorized if token is missing, invalid, or expired.
+      operationId: healthCheck
+      tags:
+        - Health
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+            pattern: '^Bearer [A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$'
+            example: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNTUwZTg0MDAtZTI5Yi00MWQ0LWE3MTYtNDQ2NjU1NDQwMDAwIiwiZW1haWwiOiJ1c2VyQGV4YW1wbGUuY29tIiwiZXhwIjoxNzM4ODM2MDAwfQ.signature'
+          description: JWT token issued by Better Auth (format: 'Bearer <token>')
+      responses:
+        '200':
+          description: Successful health check with authenticated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              examples:
+                authenticated:
+                  summary: Authenticated user
+                  value:
+                    status: healthy
+                    user_id: '550e8400-e29b-41d4-a716-446655440000'
+                    email: 'user@example.com'
+        '401':
+          description: Unauthorized - Missing, invalid, or expired JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing_token:
+                  summary: Missing Authorization header
+                  value:
+                    detail: 'Missing authentication token'
+                invalid_token:
+                  summary: Invalid JWT signature
+                  value:
+                    detail: 'Invalid or expired token'
+                expired_token:
+                  summary: Expired JWT
+                  value:
+                    detail: 'Invalid or expired token'
+                malformed_token:
+                  summary: Malformed JWT
+                  value:
+                    detail: 'Invalid or expired token'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                server_error:
+                  summary: Unexpected server error
+                  value:
+                    detail: 'Internal server error'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT token issued by Better Auth on successful user sign-in.
+
+        **Token Structure**:
+        - Header: {"alg": "HS256", "typ": "JWT"}
+        - Payload: {"user_id": "<uuid>", "email": "<email>", "exp": <timestamp>}
+        - Signature: HMACSHA256(base64UrlEncode(header) + "." + base64UrlEncode(payload), BETTER_AUTH_SECRET)
+
+        **How to Obtain**:
+        1. Sign in via `/auth/signin` endpoint (Better Auth)
+        2. Better Auth issues JWT and stores in httpOnly cookie
+        3. Frontend includes JWT in `Authorization: Bearer <token>` header for API requests
+
+        **Expiration**: 24 hours (configurable)
+
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - user_id
+        - email
+      properties:
+        status:
+          type: string
+          enum:
+            - healthy
+          description: Backend health status
+          example: 'healthy'
+        user_id:
+          type: string
+          format: uuid
+          description: User ID extracted from JWT token
+          example: '550e8400-e29b-41d4-a716-446655440000'
+        email:
+          type: string
+          format: email
+          description: User email extracted from JWT token
+          example: 'user@example.com'
+
+    ErrorResponse:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          description: Error message describing what went wrong
+          example: 'Invalid or expired token'
+
+tags:
+  - name: Health
+    description: Health check and system status endpoints
+
+externalDocs:
+  description: Feature Specification
+  url: ./spec.md

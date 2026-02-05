@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-white text-gray-900 dark:bg-gray-900 dark:text-white transition-colors duration-300;
+}
+
+/* Glassmorphism utility classes */
+@layer components {
+  .glass-card {
+    @apply bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl shadow-xl;
+  }
+
+  .dark .glass-card {
+    @apply bg-black/20 border-white/10;
+  }
+
+  .glass-card-hover {
+    @apply glass-card transition-all duration-300;
+  }
+
+  .glass-card-hover:hover {
+    @apply bg-white/20 backdrop-blur-xl shadow-2xl;
+  }
+
+  .dark .glass-card-hover:hover {
+    @apply bg-black/30;
+  }
+
+  .glass-button {
+    @apply bg-white/20 backdrop-blur-md border border-white/30 rounded-xl px-4 py-2 shadow-md;
+    @apply hover:bg-white/30 hover:border-white/40 transition-all duration-200;
+  }
+
+  .dark .glass-button {
+    @apply bg-black/30 border-white/20;
+    @apply hover:bg-black/40 hover:border-white/30;
+  }
+
+  .glass-input {
+    @apply bg-white/10 backdrop-blur-md border border-white/30 rounded-xl shadow-md;
+    @apply focus:bg-white/15 focus:border-white/50 focus:ring-2 focus:ring-white/20;
+    @apply placeholder-white/50;
+  }
+
+  .dark .glass-input {
+    @apply bg-black/20 border-white/20;
+    @apply focus:bg-black/25 focus:border-white/40;
+    @apply placeholder-white/40;
+  }
+
+  /* Primary button with subtle gradient and soft shadow */
+  .btn-primary {
+    @apply rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 text-white font-medium shadow-md;
+    @apply hover:from-blue-700 hover:to-blue-800 transition-all duration-200;
+  }
+
+  /* Primary input with refined border and shadow */
+  .input-primary {
+    @apply rounded-xl border border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+  }
+
+  .dark .input-primary {
+    @apply border-gray-700 bg-gray-800 text-white focus:ring-blue-400;
+  }
+}
+
+/* Fallback for browsers without backdrop-filter support */
+@supports not (backdrop-filter: blur(10px)) {
+  .glass-card {
+    @apply bg-white/80;
+  }
+
+  .dark .glass-card {
+    @apply bg-black/80;
+  }
+}
