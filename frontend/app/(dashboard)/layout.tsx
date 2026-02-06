@@ -5,11 +5,16 @@
 "use client";
 
 import { LayoutClient } from "@/components/layout/LayoutClient";
+import { WorkspaceProvider } from "@/lib/hooks/use-workspace";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <LayoutClient>{children}</LayoutClient>;
+  return (
+    <WorkspaceProvider>
+      <LayoutClient>{children}</LayoutClient>
+    </WorkspaceProvider>
+  );
 }
