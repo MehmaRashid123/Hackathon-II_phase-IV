@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Backend HTTPS</title>
+</head>
+<body>
+    <h1>Testing Backend Connection</h1>
+    <div id="result"></div>
+    
+    <script>
+        async function testBackend() {
+            const resultDiv = document.getElementById('result');
+            
+            // Test HTTPS
+            try {
+                resultDiv.innerHTML += '<p>Testing HTTPS: https://mehma-app.hf.space/health</p>';
+                const httpsResponse = await fetch('https://mehma-app.hf.space/health');
+                const httpsData = await httpsResponse.json();
+                resultDiv.innerHTML += '<p style="color: green;">✅ HTTPS works! Response: ' + JSON.stringify(httpsData) + '</p>';
+            } catch (error) {
+                resultDiv.innerHTML += '<p style="color: red;">❌ HTTPS failed: ' + error.message + '</p>';
+            }
+            
+            // Test HTTP (will fail on HTTPS page)
+            try {
+                resultDiv.innerHTML += '<p>Testing HTTP: http://mehma-app.hf.space/health</p>';
+                const httpResponse = await fetch('http://mehma-app.hf.space/health');
+                const httpData = await httpResponse.json();
+                resultDiv.innerHTML += '<p style="color: green;">✅ HTTP works! Response: ' + JSON.stringify(httpData) + '</p>';
+            } catch (error) {
+                resultDiv.innerHTML += '<p style="color: orange;">⚠️ HTTP blocked (expected on HTTPS page): ' + error.message + '</p>';
+            }
+        }
+        
+        testBackend();
+    </script>
+</body>
+</html>

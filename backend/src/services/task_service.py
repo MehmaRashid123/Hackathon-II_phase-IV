@@ -243,20 +243,24 @@ class TaskService:
         session.refresh(task)
 
         if changes:
-            activity_type = ActivityType.TASK_UPDATED
-            if "status" in update_data_dict:
-                activity_type = ActivityType.TASK_STATUS_CHANGED
-            elif "assigned_to" in update_data_dict:
-                activity_type = ActivityType.TASK_ASSIGNED
+            try:
+                activity_type = ActivityType.TASK_UPDATED
+                if "status" in update_data_dict:
+                    activity_type = ActivityType.TASK_STATUS_CHANGED
+                elif "assigned_to" in update_data_dict:
+                    activity_type = ActivityType.TASK_ASSIGNED
 
-            ActivityService.log_activity(
-                db=session,
-                workspace_id=workspace_id,
-                user_id=current_user.id,
-                task_id=task_id,
-                activity_type=activity_type,
-                description=f"Task '{task.title}' updated: {', '.join(changes)}"
-            )
+                ActivityService.log_activity(
+                    db=session,
+                    workspace_id=workspace_id,
+                    user_id=current_user.id,
+                    task_id=task_id,
+                    activity_type=activity_type,
+                    description=f"Task '{task.title}' updated: {', '.join(changes)}"
+                )
+            except Exception as e:
+                # Log error but don't fail the request
+                print(f"Warning: Activity logging failed during task update: {e}")
 
         return task
     @staticmethod

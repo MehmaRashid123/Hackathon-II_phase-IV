@@ -161,7 +161,7 @@ export async function signIn(data: SignInData): Promise<TokenResponse> {
  */
 export function storeToken(token: string): void {
   if (typeof window !== "undefined") {
-    localStorage.setItem("auth_token", token);
+    localStorage.setItem("access_token", token);
   }
 }
 
@@ -170,7 +170,7 @@ export function storeToken(token: string): void {
  */
 export function getToken(): string | null {
   if (typeof window !== "undefined") {
-    return localStorage.getItem("auth_token");
+    return localStorage.getItem("access_token");
   }
   return null;
 }
@@ -180,7 +180,7 @@ export function getToken(): string | null {
  */
 export function removeToken(): void {
   if (typeof window !== "undefined") {
-    localStorage.removeItem("auth_token");
+    localStorage.removeItem("access_token");
   }
 }
 
