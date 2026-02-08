@@ -118,7 +118,7 @@ export function useTasks(workspaceId?: string) {
   // Initial fetch - workspace is optional for personal tasks
   useEffect(() => {
     // Always fetch tasks, even without workspace (for personal tasks)
-    fetchTasks(effectiveWorkspaceId);
+    fetchTasks(effectiveWorkspaceId || undefined);
   }, [effectiveWorkspaceId, fetchTasks]);
 
   // Create task with optimistic update (workspace optional for personal tasks)
