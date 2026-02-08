@@ -35,11 +35,23 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
-      await apiClient.post("/api/auth/signup", { email, password }, { requireAuth: false });
-      const response = await apiClient.post<TokenResponse>("/api/auth/signin", { email, password }, { requireAuth: false });
-      auth.saveToken(response);
+      console.log("Attempting signup with:", { email });
+      
+      // Step 1: Create account
+      const signupResponse = await apiClient.post("/api/auth/signup", { email, password }, { requireAuth: false });
+      console.log("Signup successful:", signupResponse);
+      
+      // Step 2: Sign in to get token
+      const signinResponse = await apiClient.post<TokenResponse>("/api/auth/signin", { email, password }, { requireAuth: false });
+      console.log("Signin successful:", signinResponse);
+      
+      // Step 3: Save token
+      auth.saveToken(signinResponse);
+      
+      // Step 4: Redirect to dashboard
       router.push("/dashboard");
     } catch (err) {
+      console.error("Signup error:", err);
       setError(err instanceof Error ? err.message : "Failed to create account");
     } finally {
       setLoading(false);
