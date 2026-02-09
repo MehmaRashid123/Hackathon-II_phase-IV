@@ -13,6 +13,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { TopBar } from "@/components/TopBar";
 import { AnimatedLayout } from "@/components/layout/AnimatedLayout";
 import { CommandSearch } from "@/components/CommandSearch";
+import { ChatBot } from "@/components/chatbot/ChatBot";
 
 interface LayoutClientProps {
   children: React.ReactNode;
@@ -38,6 +39,7 @@ export function LayoutClient({ children }: LayoutClientProps) {
       </main>
 
       <CommandSearch />
+      <ChatBot />
     </div>
   );
 }

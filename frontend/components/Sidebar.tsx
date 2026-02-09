@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ChevronFirst, ChevronLast, LayoutDashboard, ListTodo, Columns3, ChartBar, Activity, Briefcase } from 'lucide-react';
+import { ChevronFirst, ChevronLast, LayoutDashboard, ListTodo, Columns3, ChartBar, Activity, Briefcase, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function Sidebar({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: (isOpen: boolean) => void }) {
@@ -28,6 +28,7 @@ export function Sidebar({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: (is
     { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/dashboard/tasks', icon: ListTodo, label: 'Tasks' },
     { href: '/dashboard/kanban', icon: Columns3, label: 'Kanban' },
+    { href: '/dashboard/ai-assistant', icon: MessageSquare, label: 'AI Assistant' },
     { href: '/dashboard/analytics', icon: ChartBar, label: 'Analytics' },
     { href: '/dashboard/activity', icon: Activity, label: 'Activity' },
   ];

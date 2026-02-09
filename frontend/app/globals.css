@@ -212,3 +212,84 @@ body {
 .duration-300 {
   animation-duration: 300ms;
 }
+
+/* Code Syntax Highlighting (highlight.js) */
+.hljs {
+  @apply bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 p-4 rounded-lg overflow-x-auto;
+}
+
+.hljs-comment,
+.hljs-quote {
+  @apply text-gray-500 dark:text-gray-400 italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-subst {
+  @apply text-purple-600 dark:text-purple-400 font-semibold;
+}
+
+.hljs-number,
+.hljs-literal,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag .hljs-attr {
+  @apply text-blue-600 dark:text-blue-400;
+}
+
+.hljs-string,
+.hljs-doctag {
+  @apply text-green-600 dark:text-green-400;
+}
+
+.hljs-title,
+.hljs-section,
+.hljs-selector-id {
+  @apply text-red-600 dark:text-red-400 font-semibold;
+}
+
+.hljs-type,
+.hljs-class .hljs-title {
+  @apply text-yellow-600 dark:text-yellow-400;
+}
+
+.hljs-tag,
+.hljs-name,
+.hljs-attribute {
+  @apply text-blue-600 dark:text-blue-400 font-normal;
+}
+
+.hljs-regexp,
+.hljs-link {
+  @apply text-cyan-600 dark:text-cyan-400;
+}
+
+.hljs-symbol,
+.hljs-bullet {
+  @apply text-purple-600 dark:text-purple-400;
+}
+
+.hljs-built_in,
+.hljs-builtin-name {
+  @apply text-orange-600 dark:text-orange-400;
+}
+
+.hljs-meta {
+  @apply text-gray-600 dark:text-gray-400;
+}
+
+.hljs-deletion {
+  @apply bg-red-100 dark:bg-red-900;
+}
+
+.hljs-addition {
+  @apply bg-green-100 dark:bg-green-900;
+}
+
+.hljs-emphasis {
+  @apply italic;
+}
+
+.hljs-strong {
+  @apply font-bold;
+}

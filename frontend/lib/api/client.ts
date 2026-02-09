@@ -74,43 +74,60 @@ export class ApiClient {
       headers.set("Authorization", `Bearer ${token}`);
     }
 
-    // Make request
+    // Make request with CORS mode
     const url = `${this.baseURL}${endpoint}`;
-    const response = await fetch(url, {
-      ...fetchOptions,
-      headers,
-    });
+    console.log(`🌐 API Request: ${fetchOptions.method || 'GET'} ${url}`);
+    
+    try {
+      const response = await fetch(url, {
+        ...fetchOptions,
+        headers,
+        mode: 'cors', // Explicitly set CORS mode
+        credentials: 'omit', // Don't send cookies for CORS
+      });
 
-    // Handle authentication errors
-    if (response.status === 401) {
-      // Token expired or invalid - redirect to login
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("access_token");
-        window.location.href = "/login";
+      console.log(`✅ API Response: ${response.status} ${response.statusText}`);
+
+      // Handle authentication errors
+      if (response.status === 401) {
+        // Token expired or invalid - redirect to login
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("access_token");
+          window.location.href = "/login";
+        }
+        throw new Error("Authentication failed");
       }
-      throw new Error("Authentication failed");
+
+      // Handle forbidden errors (user isolation violation)
+      if (response.status === 403) {
+        throw new Error("You do not have permission to access this resource");
+      }
+
+      // Parse response
+      if (response.status === 204) {
+        // No content (e.g., DELETE success)
+        return undefined as T;
+      }
+
+      const data = await response.json();
+
+      // Handle error responses
+      if (!response.ok) {
+        const error = data.detail || `Request failed with status ${response.status}`;
+        throw new Error(error);
+      }
+
+      return data as T;
+    } catch (error) {
+      console.error(`❌ API Error for ${url}:`, error);
+      
+      // Check if it's a network error
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error(`Cannot connect to backend at ${this.baseURL}. Please ensure the backend is running on port 8000.`);
+      }
+      
+      throw error;
     }
-
-    // Handle forbidden errors (user isolation violation)
-    if (response.status === 403) {
-      throw new Error("You do not have permission to access this resource");
-    }
-
-    // Parse response
-    if (response.status === 204) {
-      // No content (e.g., DELETE success)
-      return undefined as T;
-    }
-
-    const data = await response.json();
-
-    // Handle error responses
-    if (!response.ok) {
-      const error = data.detail || `Request failed with status ${response.status}`;
-      throw new Error(error);
-    }
-
-    return data as T;
   }
 
   /**

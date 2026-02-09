@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Chat Endpoint</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Chat Endpoint</h1>
+    
+    <div class="section">
+        <h2>1. Get User Info from localStorage</h2>
+        <button onclick="getUserInfo()">Get User Info</button>
+        <pre id="userInfo"></pre>
+    </div>
+
+    <div class="section">
+        <h2>2. Test Chat API</h2>
+        <label>User ID:</label>
+        <input type="text" id="userId" placeholder="Will be filled from localStorage">
+        <label>JWT Token:</label>
+        <input type="text" id="token" placeholder="Will be filled from localStorage">
+        <label>Message:</label>
+        <textarea id="message" rows="3">Hello! Can you help me?</textarea>
+        <br><br>
+        <button onclick="testChat()">Send Chat Message</button>
+        <h3>Response:</h3>
+        <pre id="response"></pre>
+    </div>
+
+    <script>
+        function getUserInfo() {
+            const token = localStorage.getItem('access_token');
+            const userStr = localStorage.getItem('user');
+            const user = userStr ? JSON.parse(userStr) : null;
+            
+            const info = {
+                hasToken: !!token,
+                tokenPreview: token ? token.substring(0, 50) + '...' : 'No token',
+                user: user
+            };
+            
+            document.getElementById('userInfo').textContent = JSON.stringify(info, null, 2);
+            
+            if (user && user.id) {
+                document.getElementById('userId').value = user.id;
+            }
+            if (token) {
+                document.getElementById('token').value = token;
+            }
+        }
+
+        async function testChat() {
+            const userId = document.getElementById('userId').value;
+            const token = document.getElementById('token').value;
+            const message = document.getElementById('message').value;
+            const responseEl = document.getElementById('response');
+            
+            if (!userId || !token) {
+                responseEl.innerHTML = '<span class="error">Please get user info first!</span>';
+                return;
+            }
+            
+            responseEl.textContent = 'Sending request...';
+            
+            try {
+                const url = `http://localhost:8000/api/${userId}/chat`;
+                console.log('Sending to:', url);
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        message: message
+                    })
+                });
+                
+                console.log('Response status:', response.status);
+                const data = await response.text();
+                console.log('Response data:', data);
+                
+                if (response.ok) {
+                    const jsonData = JSON.parse(data);
+                    responseEl.innerHTML = '<span class="success">SUCCESS!</span>\n' + JSON.stringify(jsonData, null, 2);
+                } else {
+                    responseEl.innerHTML = '<span class="error">ERROR ' + response.status + '</span>\n' + data;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                responseEl.innerHTML = '<span class="error">ERROR:</span>\n' + error.message + '\n\n' + error.stack;
+            }
+        }
+        
+        // Auto-load user info on page load
+        window.onload = getUserInfo;
+    </script>
+</body>
+</html>

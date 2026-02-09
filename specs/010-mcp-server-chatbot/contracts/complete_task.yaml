@@ -1,0 +1,145 @@
+# MCP Tool Contract: complete_task
+
+name: complete_task
+version: 1.0.0
+description: Mark a task as complete. This tool enables AI agents to mark tasks as done when users indicate they've finished them.
+
+# Tool Metadata
+metadata:
+  category: task_management
+  stateless: true
+  requires_auth: true
+  multi_tenant: true
+
+# Input Parameters
+parameters:
+  type: object
+  required:
+    - user_id
+    - task_id
+  properties:
+    user_id:
+      type: string
+      format: uuid
+      description: UUID of the user (required for multi-tenant isolation)
+      example: "123e4567-e89b-12d3-a456-426614174000"
+      
+    task_id:
+      type: string
+      format: uuid
+      description: UUID of the task to mark as complete
+      example: "770e8400-e29b-41d4-a716-446655440000"
+
+# Output Schema
+returns:
+  type: object
+  properties:
+    task_id:
+      type: string
+      format: uuid
+      description: Unique identifier for the task
+      example: "770e8400-e29b-41d4-a716-446655440000"
+      
+    title:
+      type: string
+      description: Task title
+      example: "Buy groceries"
+      
+    description:
+      type: string
+      nullable: true
+      description: Task description (null if not provided)
+      example: "Milk, eggs, bread"
+      
+    completed:
+      type: boolean
+      description: Completion status (always true after completion)
+      example: true
+      
+    created_at:
+      type: string
+      format: date-time
+      description: ISO 8601 timestamp of task creation
+      example: "2026-02-09T10:30:00"
+      
+    updated_at:
+      type: string
+      format: date-time
+      description: ISO 8601 timestamp of last update (updated to completion time)
+      example: "2026-02-09T11:45:00"
+      
+    completed_at:
+      type: string
+      format: date-time
+      description: ISO 8601 timestamp of completion
+      example: "2026-02-09T11:45:00"
+
+# Error Responses
+errors:
+  - code: VALIDATION_ERROR
+    description: Invalid input parameters
+    examples:
+      - error: "Invalid UUID format"
+        details:
+          field: "user_id"
+      - error: "Invalid UUID format"
+        details:
+          field: "task_id"
+          
+  - code: NOT_FOUND
+    description: Task not found or user doesn't have access
+    examples:
+      - error: "Task not found"
+        details:
+          resource: "Task"
+          id: "770e8400-e29b-41d4-a716-446655440000"
+
+# Usage Examples
+examples:
+  - name: Complete a task
+    input:
+      user_id: "123e4567-e89b-12d3-a456-426614174000"
+      task_id: "770e8400-e29b-41d4-a716-446655440000"
+    output:
+      task_id: "770e8400-e29b-41d4-a716-446655440000"
+      title: "Buy groceries"
+      description: "Milk, eggs, bread"
+      completed: true
+      created_at: "2026-02-09T10:30:00"
+      updated_at: "2026-02-09T11:45:00"
+      completed_at: "2026-02-09T11:45:00"
+      
+  - name: Complete already completed task (idempotent)
+    input:
+      user_id: "123e4567-e89b-12d3-a456-426614174000"
+      task_id: "770e8400-e29b-41d4-a716-446655440000"
+    output:
+      task_id: "770e8400-e29b-41d4-a716-446655440000"
+      title: "Buy groceries"
+      description: "Milk, eggs, bread"
+      completed: true
+      created_at: "2026-02-09T10:30:00"
+      updated_at: "2026-02-09T11:45:00"
+      completed_at: "2026-02-09T11:45:00"
+
+# Security Considerations
+security:
+  - Multi-tenant isolation: Tasks are filtered by user_id
+  - No cross-user access: Users can only complete their own tasks
+  - SQL injection prevention: All inputs are parameterized
+  - Idempotent operation: Completing an already completed task is safe
+
+# Performance Characteristics
+performance:
+  typical_latency: "< 150ms"
+  max_latency: "< 400ms"
+  database_operations: 1 SELECT + 1 UPDATE
+  scalability: Horizontal (stateless)
+  indexing: user_id column is indexed
+
+# Related Tools
+related:
+  - add_task: Create a new task
+  - list_tasks: List all tasks for the user
+  - update_task: Update task details
+  - delete_task: Delete a task

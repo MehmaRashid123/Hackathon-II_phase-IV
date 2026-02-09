@@ -1,0 +1,166 @@
+# MCP Tool Contract: list_tasks
+
+name: list_tasks
+version: 1.0.0
+description: List all tasks for the user with optional filtering by completion status. This tool enables AI agents to retrieve and display the user's task list.
+
+# Tool Metadata
+metadata:
+  category: task_management
+  stateless: true
+  requires_auth: true
+  multi_tenant: true
+
+# Input Parameters
+parameters:
+  type: object
+  required:
+    - user_id
+  properties:
+    user_id:
+      type: string
+      format: uuid
+      description: UUID of the user (required for multi-tenant isolation)
+      example: "123e4567-e89b-12d3-a456-426614174000"
+      
+    completed:
+      type: boolean
+      nullable: true
+      description: Filter by completion status (optional - null returns all tasks)
+      default: null
+      examples:
+        - true   # Only completed tasks
+        - false  # Only incomplete tasks
+        - null   # All tasks
+
+# Output Schema
+returns:
+  type: object
+  properties:
+    tasks:
+      type: array
+      description: Array of task objects
+      items:
+        type: object
+        properties:
+          task_id:
+            type: string
+            format: uuid
+            description: Unique identifier for the task
+            
+          title:
+            type: string
+            description: Task title
+            
+          description:
+            type: string
+            nullable: true
+            description: Task description (null if not provided)
+            
+          completed:
+            type: boolean
+            description: Completion status
+            
+          created_at:
+            type: string
+            format: date-time
+            description: ISO 8601 timestamp of task creation
+            
+          updated_at:
+            type: string
+            format: date-time
+            description: ISO 8601 timestamp of last update
+            
+          completed_at:
+            type: string
+            format: date-time
+            nullable: true
+            description: ISO 8601 timestamp of completion (null if not completed)
+            
+    count:
+      type: integer
+      description: Total number of tasks returned
+      example: 5
+
+# Error Responses
+errors:
+  - code: VALIDATION_ERROR
+    description: Invalid input parameters
+    examples:
+      - error: "Invalid UUID format"
+        details:
+          field: "user_id"
+
+# Usage Examples
+examples:
+  - name: List all tasks
+    input:
+      user_id: "123e4567-e89b-12d3-a456-426614174000"
+    output:
+      tasks:
+        - task_id: "770e8400-e29b-41d4-a716-446655440000"
+          title: "Buy groceries"
+          description: "Milk, eggs, bread"
+          completed: false
+          created_at: "2026-02-09T10:30:00"
+          updated_at: "2026-02-09T10:30:00"
+          completed_at: null
+        - task_id: "880e8400-e29b-41d4-a716-446655440001"
+          title: "Call dentist"
+          description: null
+          completed: true
+          created_at: "2026-02-08T14:20:00"
+          updated_at: "2026-02-09T09:15:00"
+          completed_at: "2026-02-09T09:15:00"
+      count: 2
+      
+  - name: List only incomplete tasks
+    input:
+      user_id: "123e4567-e89b-12d3-a456-426614174000"
+      completed: false
+    output:
+      tasks:
+        - task_id: "770e8400-e29b-41d4-a716-446655440000"
+          title: "Buy groceries"
+          description: "Milk, eggs, bread"
+          completed: false
+          created_at: "2026-02-09T10:30:00"
+          updated_at: "2026-02-09T10:30:00"
+          completed_at: null
+      count: 1
+      
+  - name: List only completed tasks
+    input:
+      user_id: "123e4567-e89b-12d3-a456-426614174000"
+      completed: true
+    output:
+      tasks:
+        - task_id: "880e8400-e29b-41d4-a716-446655440001"
+          title: "Call dentist"
+          description: null
+          completed: true
+          created_at: "2026-02-08T14:20:00"
+          updated_at: "2026-02-09T09:15:00"
+          completed_at: "2026-02-09T09:15:00"
+      count: 1
+
+# Security Considerations
+security:
+  - Multi-tenant isolation: All tasks are filtered by user_id
+  - No cross-user access: Users can only see their own tasks
+  - SQL injection prevention: All inputs are parameterized
+
+# Performance Characteristics
+performance:
+  typical_latency: "< 100ms"
+  max_latency: "< 300ms"
+  database_operations: 1 SELECT with optional WHERE clause
+  scalability: Horizontal (stateless)
+  indexing: user_id and completed columns are indexed
+
+# Related Tools
+related:
+  - add_task: Create a new task
+  - update_task: Update task details
+  - complete_task: Mark task as complete
+  - delete_task: Delete a task

@@ -1,0 +1,195 @@
+# MCP Tool Contract: update_task
+
+name: update_task
+version: 1.0.0
+description: Update task details (title and/or description). This tool enables AI agents to modify existing tasks based on user requests.
+
+# Tool Metadata
+metadata:
+  category: task_management
+  stateless: true
+  requires_auth: true
+  multi_tenant: true
+
+# Input Parameters
+parameters:
+  type: object
+  required:
+    - user_id
+    - task_id
+  properties:
+    user_id:
+      type: string
+      format: uuid
+      description: UUID of the user (required for multi-tenant isolation)
+      example: "123e4567-e89b-12d3-a456-426614174000"
+      
+    task_id:
+      type: string
+      format: uuid
+      description: UUID of the task to update
+      example: "770e8400-e29b-41d4-a716-446655440000"
+      
+    title:
+      type: string
+      nullable: true
+      minLength: 1
+      maxLength: 255
+      description: New task title (optional, 1-255 characters)
+      example: "Buy groceries and milk"
+      
+    description:
+      type: string
+      nullable: true
+      maxLength: 2000
+      description: New task description (optional, max 2000 characters)
+      example: "Milk, eggs, bread, butter"
+
+# Output Schema
+returns:
+  type: object
+  properties:
+    task_id:
+      type: string
+      format: uuid
+      description: Unique identifier for the task
+      example: "770e8400-e29b-41d4-a716-446655440000"
+      
+    title:
+      type: string
+      description: Updated task title
+      example: "Buy groceries and milk"
+      
+    description:
+      type: string
+      nullable: true
+      description: Updated task description (null if not provided)
+      example: "Milk, eggs, bread, butter"
+      
+    completed:
+      type: boolean
+      description: Completion status (unchanged by this operation)
+      example: false
+      
+    created_at:
+      type: string
+      format: date-time
+      description: ISO 8601 timestamp of task creation (unchanged)
+      example: "2026-02-09T10:30:00"
+      
+    updated_at:
+      type: string
+      format: date-time
+      description: ISO 8601 timestamp of last update (updated to current time)
+      example: "2026-02-09T12:15:00"
+      
+    completed_at:
+      type: string
+      format: date-time
+      nullable: true
+      description: ISO 8601 timestamp of completion (unchanged)
+      example: null
+
+# Error Responses
+errors:
+  - code: VALIDATION_ERROR
+    description: Invalid input parameters
+    examples:
+      - error: "Title cannot be empty or whitespace"
+        details:
+          field: "title"
+      - error: "Task title cannot exceed 255 characters"
+        details:
+          field: "title"
+      - error: "Task description cannot exceed 2000 characters"
+        details:
+          field: "description"
+      - error: "Invalid UUID format"
+        details:
+          field: "user_id"
+      - error: "At least one field (title or description) must be provided"
+        details:
+          fields: ["title", "description"]
+          
+  - code: NOT_FOUND
+    description: Task not found or user doesn't have access
+    examples:
+      - error: "Task not found"
+        details:
+          resource: "Task"
+          id: "770e8400-e29b-41d4-a716-446655440000"
+
+# Usage Examples
+examples:
+  - name: Update task title only
+    input:
+      user_id: "123e4567-e89b-12d3-a456-426614174000"
+      task_id: "770e8400-e29b-41d4-a716-446655440000"
+      title: "Buy groceries and milk"
+    output:
+      task_id: "770e8400-e29b-41d4-a716-446655440000"
+      title: "Buy groceries and milk"
+      description: "Milk, eggs, bread"
+      completed: false
+      created_at: "2026-02-09T10:30:00"
+      updated_at: "2026-02-09T12:15:00"
+      completed_at: null
+      
+  - name: Update task description only
+    input:
+      user_id: "123e4567-e89b-12d3-a456-426614174000"
+      task_id: "770e8400-e29b-41d4-a716-446655440000"
+      description: "Milk, eggs, bread, butter, cheese"
+    output:
+      task_id: "770e8400-e29b-41d4-a716-446655440000"
+      title: "Buy groceries"
+      description: "Milk, eggs, bread, butter, cheese"
+      completed: false
+      created_at: "2026-02-09T10:30:00"
+      updated_at: "2026-02-09T12:20:00"
+      completed_at: null
+      
+  - name: Update both title and description
+    input:
+      user_id: "123e4567-e89b-12d3-a456-426614174000"
+      task_id: "770e8400-e29b-41d4-a716-446655440000"
+      title: "Weekly grocery shopping"
+      description: "Full list: milk, eggs, bread, butter, cheese, vegetables"
+    output:
+      task_id: "770e8400-e29b-41d4-a716-446655440000"
+      title: "Weekly grocery shopping"
+      description: "Full list: milk, eggs, bread, butter, cheese, vegetables"
+      completed: false
+      created_at: "2026-02-09T10:30:00"
+      updated_at: "2026-02-09T12:25:00"
+      completed_at: null
+
+# Security Considerations
+security:
+  - Multi-tenant isolation: Tasks are filtered by user_id
+  - No cross-user access: Users can only update their own tasks
+  - Input validation: Title and description are validated for length and content
+  - SQL injection prevention: All inputs are parameterized
+  - Partial updates: Only provided fields are updated
+
+# Performance Characteristics
+performance:
+  typical_latency: "< 200ms"
+  max_latency: "< 500ms"
+  database_operations: 1 SELECT + 1 UPDATE
+  scalability: Horizontal (stateless)
+  indexing: user_id column is indexed
+
+# Related Tools
+related:
+  - add_task: Create a new task
+  - list_tasks: List all tasks for the user
+  - complete_task: Mark task as complete
+  - delete_task: Delete a task
+
+# Notes
+notes:
+  - At least one field (title or description) must be provided
+  - This operation does not change the completion status - use complete_task for that
+  - The updated_at timestamp is automatically updated
+  - Partial updates are supported - only provided fields are modified

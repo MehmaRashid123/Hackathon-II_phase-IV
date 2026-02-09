@@ -1,0 +1,152 @@
+# MCP Tool Contract: add_task
+
+name: add_task
+version: 1.0.0
+description: Create a new task for the user. This tool enables AI agents to add tasks to the user's task list through natural language commands.
+
+# Tool Metadata
+metadata:
+  category: task_management
+  stateless: true
+  requires_auth: true
+  multi_tenant: true
+
+# Input Parameters
+parameters:
+  type: object
+  required:
+    - user_id
+    - title
+  properties:
+    user_id:
+      type: string
+      format: uuid
+      description: UUID of the user creating the task (required for multi-tenant isolation)
+      example: "123e4567-e89b-12d3-a456-426614174000"
+      
+    title:
+      type: string
+      minLength: 1
+      maxLength: 255
+      description: Task title (required, 1-255 characters)
+      example: "Buy groceries"
+      
+    description:
+      type: string
+      maxLength: 2000
+      description: Task description (optional, max 2000 characters)
+      default: ""
+      example: "Milk, eggs, bread"
+
+# Output Schema
+returns:
+  type: object
+  properties:
+    task_id:
+      type: string
+      format: uuid
+      description: Unique identifier for the created task
+      example: "770e8400-e29b-41d4-a716-446655440000"
+      
+    title:
+      type: string
+      description: Task title
+      example: "Buy groceries"
+      
+    description:
+      type: string
+      nullable: true
+      description: Task description (null if not provided)
+      example: "Milk, eggs, bread"
+      
+    completed:
+      type: boolean
+      description: Completion status (always false for new tasks)
+      example: false
+      
+    created_at:
+      type: string
+      format: date-time
+      description: ISO 8601 timestamp of task creation
+      example: "2026-02-09T10:30:00"
+      
+    updated_at:
+      type: string
+      format: date-time
+      description: ISO 8601 timestamp of last update
+      example: "2026-02-09T10:30:00"
+      
+    completed_at:
+      type: string
+      format: date-time
+      nullable: true
+      description: ISO 8601 timestamp of completion (null for new tasks)
+      example: null
+
+# Error Responses
+errors:
+  - code: VALIDATION_ERROR
+    description: Invalid input parameters
+    examples:
+      - error: "Title cannot be empty or whitespace"
+        details:
+          field: "title"
+      - error: "Task title cannot exceed 255 characters"
+        details:
+          field: "title"
+      - error: "Task description cannot exceed 2000 characters"
+        details:
+          field: "description"
+      - error: "Invalid UUID format"
+        details:
+          field: "user_id"
+
+# Usage Examples
+examples:
+  - name: Create task with description
+    input:
+      user_id: "123e4567-e89b-12d3-a456-426614174000"
+      title: "Buy groceries"
+      description: "Milk, eggs, bread"
+    output:
+      task_id: "770e8400-e29b-41d4-a716-446655440000"
+      title: "Buy groceries"
+      description: "Milk, eggs, bread"
+      completed: false
+      created_at: "2026-02-09T10:30:00"
+      updated_at: "2026-02-09T10:30:00"
+      completed_at: null
+      
+  - name: Create task without description
+    input:
+      user_id: "123e4567-e89b-12d3-a456-426614174000"
+      title: "Call dentist"
+    output:
+      task_id: "880e8400-e29b-41d4-a716-446655440001"
+      title: "Call dentist"
+      description: null
+      completed: false
+      created_at: "2026-02-09T10:31:00"
+      updated_at: "2026-02-09T10:31:00"
+      completed_at: null
+
+# Security Considerations
+security:
+  - Multi-tenant isolation: All tasks are filtered by user_id
+  - Input validation: Title and description are validated for length and content
+  - SQL injection prevention: All inputs are parameterized
+  - No cross-user access: Users can only create tasks for themselves
+
+# Performance Characteristics
+performance:
+  typical_latency: "< 200ms"
+  max_latency: "< 500ms"
+  database_operations: 1 INSERT
+  scalability: Horizontal (stateless)
+
+# Related Tools
+related:
+  - list_tasks: List all tasks for the user
+  - update_task: Update task details
+  - complete_task: Mark task as complete
+  - delete_task: Delete a task

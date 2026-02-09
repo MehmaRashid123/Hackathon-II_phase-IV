@@ -1,0 +1,115 @@
+# MCP Tool Contract: delete_task
+
+name: delete_task
+version: 1.0.0
+description: Delete a task. This tool enables AI agents to remove tasks from the user's task list when they're no longer needed.
+
+# Tool Metadata
+metadata:
+  category: task_management
+  stateless: true
+  requires_auth: true
+  multi_tenant: true
+
+# Input Parameters
+parameters:
+  type: object
+  required:
+    - user_id
+    - task_id
+  properties:
+    user_id:
+      type: string
+      format: uuid
+      description: UUID of the user (required for multi-tenant isolation)
+      example: "123e4567-e89b-12d3-a456-426614174000"
+      
+    task_id:
+      type: string
+      format: uuid
+      description: UUID of the task to delete
+      example: "770e8400-e29b-41d4-a716-446655440000"
+
+# Output Schema
+returns:
+  type: object
+  properties:
+    success:
+      type: boolean
+      description: Whether the deletion was successful
+      example: true
+      
+    message:
+      type: string
+      description: Human-readable confirmation message
+      example: "Task deleted successfully"
+
+# Error Responses
+errors:
+  - code: VALIDATION_ERROR
+    description: Invalid input parameters
+    examples:
+      - error: "Invalid UUID format"
+        details:
+          field: "user_id"
+      - error: "Invalid UUID format"
+        details:
+          field: "task_id"
+          
+  - code: NOT_FOUND
+    description: Task not found or user doesn't have access
+    examples:
+      - error: "Task not found"
+        details:
+          resource: "Task"
+          id: "770e8400-e29b-41d4-a716-446655440000"
+
+# Usage Examples
+examples:
+  - name: Delete a task
+    input:
+      user_id: "123e4567-e89b-12d3-a456-426614174000"
+      task_id: "770e8400-e29b-41d4-a716-446655440000"
+    output:
+      success: true
+      message: "Task deleted successfully"
+      
+  - name: Delete non-existent task
+    input:
+      user_id: "123e4567-e89b-12d3-a456-426614174000"
+      task_id: "999e8400-e29b-41d4-a716-446655440999"
+    output:
+      error: "NOT_FOUND"
+      message: "Task not found"
+      details:
+        resource: "Task"
+        id: "999e8400-e29b-41d4-a716-446655440999"
+
+# Security Considerations
+security:
+  - Multi-tenant isolation: Tasks are filtered by user_id
+  - No cross-user access: Users can only delete their own tasks
+  - SQL injection prevention: All inputs are parameterized
+  - Permanent deletion: This operation cannot be undone
+  - Soft delete option: Consider implementing soft deletes for data recovery
+
+# Performance Characteristics
+performance:
+  typical_latency: "< 150ms"
+  max_latency: "< 400ms"
+  database_operations: 1 SELECT + 1 DELETE
+  scalability: Horizontal (stateless)
+  indexing: user_id column is indexed
+
+# Related Tools
+related:
+  - add_task: Create a new task
+  - list_tasks: List all tasks for the user
+  - update_task: Update task details
+  - complete_task: Mark task as complete
+
+# Notes
+notes:
+  - This is a permanent deletion operation
+  - Consider using complete_task instead if the task is finished but should be kept for records
+  - No undo functionality is provided
